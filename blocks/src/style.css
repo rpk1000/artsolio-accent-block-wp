@@ -1,0 +1,74 @@
+/* Default size + absolute positioning; parent anchors position context */
+.is-accent-anchor,
+.artsolio_is-accent-anchor {
+  position: relative !important;
+}
+
+.wp-block-artsolio-accent {
+  position: absolute !important;
+  inline-size: var(--artsolio_accent_size, clamp(96px, 15cqi, 200px));
+  aspect-ratio: 1;
+  pointer-events: none;
+  z-index: 10;
+
+  /* reset sides + common “centering helpers” */
+  top: auto !important;
+  right: auto !important;
+  bottom: auto !important;
+  left: auto !important;
+  margin: 0 !important;
+  transform: none !important;
+}
+
+/* --- Corner mapping: classes match UI; CSS maps to visual (flip handled here) --- */
+/* We map TOP classes to physical TOP (if your environment is still inverted, swap TOP/BOTTOM here only) */
+
+/* If your site still visually inverts TOP/BOTTOM,
+   use these FLIPPED mappings (as previously needed):
+   - top-left    -> bottom/left
+   - top-right   -> bottom/right
+   - bottom-left -> top/left
+   - bottom-right-> top/right
+   Update only this section to adapt. */
+
+.is-accent-anchor > .wp-block-artsolio-accent.is-top-left,
+.artsolio_is-accent-anchor > .wp-block-artsolio-accent.is-top-left {
+  /* FLIPPED: render at bottom-left */
+  bottom: calc(var(--artsolio_offset_y, var(--artsolio_accent_offset, 0.75rem))) !important;
+  left:   calc(var(--artsolio_offset_x, var(--artsolio_accent_offset, 0.75rem))) !important;
+}
+
+.is-accent-anchor > .wp-block-artsolio-accent.is-top-right,
+.artsolio_is-accent-anchor > .wp-block-artsolio-accent.is-top-right {
+  /* FLIPPED: render at bottom-right */
+  bottom: calc(var(--artsolio_offset_y, var(--artsolio_accent_offset, 0.75rem))) !important;
+  right:  calc(var(--artsolio_offset_x, var(--artsolio_accent_offset, 0.75rem))) !important;
+}
+
+.is-accent-anchor > .wp-block-artsolio-accent.is-bottom-left,
+.artsolio_is-accent-anchor > .wp-block-artsolio-accent.is-bottom-left {
+  /* FLIPPED: render at top-left */
+  top:  calc(var(--artsolio_offset_y, var(--artsolio_accent_offset, 0.75rem))) !important;
+  left: calc(var(--artsolio_offset_x, var(--artsolio_accent_offset, 0.75rem))) !important;
+}
+
+.is-accent-anchor > .wp-block-artsolio-accent.is-bottom-right,
+.artsolio_is-accent-anchor > .wp-block-artsolio-accent.is-bottom-right {
+  /* FLIPPED: render at top-right */
+  top:   calc(var(--artsolio_offset_y, var(--artsolio_accent_offset, 0.75rem))) !important;
+  right: calc(var(--artsolio_offset_x, var(--artsolio_accent_offset, 0.75rem))) !important;
+}
+
+/* Mobile hide */
+@media (max-width: 781px) {
+  .wp-block-artsolio-accent.is-hidden-mobile {
+    display: none !important;
+  }
+}
+
+.wp-block-artsolio-accent img {
+  display: block !important;
+  width: 100% !important;
+  height: auto !important;
+  border-radius: var(--artsolio_accent_radius, 0);
+}

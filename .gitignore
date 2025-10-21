@@ -1,0 +1,39 @@
+# Node
+/node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.pnpm-store/
+
+# Root build folder (we compile to blocks/accent/build instead)
+# Keep block builds tracked.
+/build/
+
+# OS cruft
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Icon?
+desktop.ini
+
+# Editors / IDE
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+
+# Env / local overrides
+.env
+.env.*
+*.local
+
+# Archives
+*.zip
+*.tar
+*.gz
+
+# Git
+.git-credentials

@@ -1,0 +1,13 @@
+{
+  "name": "artsolio-accent-block",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "start": "wp-scripts start blocks/src/index.js --output-path=blocks/accent/build",
+    "build": "wp-scripts build blocks/src/index.js --output-path=blocks/accent/build",
+    "zip": "npm run build && powershell -NoProfile -ExecutionPolicy Bypass -Command \"Remove-Item -Recurse -Force ./dist -ErrorAction SilentlyContinue; New-Item -ItemType Directory -Path ./dist | Out-Null; New-Item -ItemType Directory -Path ./dist/artsolio-accent-block/blocks/accent | Out-Null; Copy-Item ./artsolio-accent-block.php ./dist/artsolio-accent-block/; Copy-Item ./readme.txt ./dist/artsolio-accent-block/; if (Test-Path ./README.md) { Copy-Item ./README.md ./dist/artsolio-accent-block/ }; Copy-Item ./blocks/accent/block.json ./dist/artsolio-accent-block/blocks/accent/; Copy-Item ./blocks/accent/build -Destination ./dist/artsolio-accent-block/blocks/accent/ -Recurse; $Version='1.0.0'; $ZipPath='dist/artsolio-accent-block-' + $Version + '.zip'; if (Test-Path $ZipPath) { Remove-Item $ZipPath -Force }; tar -a -c -f $ZipPath -C ./dist artsolio-accent-block\""
+  },
+  "devDependencies": {
+    "@wordpress/scripts": "^30.26.0"
+  }
+}

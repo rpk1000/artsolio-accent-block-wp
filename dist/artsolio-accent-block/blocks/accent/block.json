@@ -1,0 +1,45 @@
+{
+  "$schema": "https://schemas.wp.org/trunk/block.json",
+  "apiVersion": 3,
+  "name": "artsolio/accent",
+  "title": "Accent Image",
+  "description": "Place a decorative accent image in a section corner. Core/Kadence compatible.",
+  "category": "design",
+  "icon": "format-image",
+  "textdomain": "artsolio-accent",
+  "editorScript": [
+    "artsolio-accent-editor-config",
+    "file:./build/index.js"
+  ],
+  "style": "file:./build/style-index.css",
+  "editorStyle": "file:./build/style-index.css",
+  "supports": {
+    "html": false,
+    "anchor": false
+  },
+  "attributes": {
+    "id":        { "type": "number" },
+    "url":       { "type": "string" },
+    "alt":       { "type": "string", "default": "" },
+
+    "corner":    { "type": "string", "enum": ["top-left","top-right","bottom-left","bottom-right"], "default": "top-right" },
+
+    "sizeMode":    { "type": "string", "enum": ["preset","custom"], "default": "preset" },
+    "sizePreset":  { "type": "string", "default": "L" },
+    "sizeCustom":  { "type": "string" },
+    "sizeCustomAdvanced": { "type": "boolean", "default": false },
+    "sizeResolved":{ "type": "string" },
+
+    "offsetSplit":    { "type": "boolean", "default": false },
+    "offsetMode":     { "type": "string", "enum": ["preset","custom"], "default": "preset" },
+    "offsetPreset":   { "type": "string", "default": "M" },
+    "offsetCustom":   { "type": "string" },
+    "offsetResolved": { "type": "string" },
+    "offsetXCustom":  { "type": "string" },
+    "offsetYCustom":  { "type": "string" },
+    "offsetXResolved":{ "type": "string" },
+    "offsetYResolved":{ "type": "string" },
+    "hideOnMobile": { "type": "boolean", "default": false },
+    "markParent":   { "type": "boolean", "default": false }
+  }
+}

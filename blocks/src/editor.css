@@ -1,0 +1,17 @@
+/* Keep block selectable; stop editor wrapper from capturing absolute positioning */
+.block-editor-block-list__block[data-type="artsolio/accent"] {
+  position: static !important;
+  min-height: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+.block-editor-block-list__block[data-type="artsolio/accent"] > .wp-block-artsolio-accent {
+  position: absolute !important;
+  z-index: 10 !important;
+}
+
+/* Optional light outline in editor */
+.wp-block-artsolio-accent {
+  outline: 1px dashed rgba(0,0,0,.12);
+}

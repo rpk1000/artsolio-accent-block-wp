@@ -1,0 +1,23 @@
+# 1) Build (if not already done)
+npm run build
+
+# 2) Prep a clean dist folder
+Remove-Item -Recurse -Force .\dist -ErrorAction SilentlyContinue
+New-Item -ItemType Directory -Path .\dist\artsolio-accent-block | Out-Null
+
+# 3) Copy runtime files
+Copy-Item .\artsolio-accent-block.php .\dist\artsolio-accent-block\
+Copy-Item .\readme.txt .\dist\artsolio-accent-block\
+if (Test-Path .\README.md) { Copy-Item .\README.md .\dist\artsolio-accent-block\ }
+
+# 4) Copy block metadata + build
+New-Item -ItemType Directory -Path .\dist\artsolio-accent-block\blocks\accent | Out-Null
+Copy-Item .\blocks\accent\block.json .\dist\artsolio-accent-block\blocks\accent\
+Copy-Item .\blocks\accent\build -Destination .\dist\artsolio-accent-block\blocks\accent\ -Recurse
+
+# 5) Create the zip
+$Version = "1.0.0"  # update when you bump versions
+$ZipPath = ".\dist\artsolio-accent-block-$Version.zip"
+Compress-Archive -Path .\dist\artsolio-accent-block -DestinationPath $ZipPath -Force
+
+Write-Host "Release created at $ZipPath"
