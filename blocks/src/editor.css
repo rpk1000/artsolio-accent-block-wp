@@ -1,17 +1,34 @@
 /* === Artsolio Accent — Editor-only === */
 
-.editor-styles-wrapper .wp-block-artsolio-accent .artsolio-accent,
-.editor-styles-wrapper .wp-block-artsolio-accent .artsolio-accent * {
+/* Default: the decorative figure shouldn't steal clicks while editing */
+.editor-styles-wrapper .wp-block-artsolio-accent.artsolio-accent,
+.editor-styles-wrapper .wp-block-artsolio-accent.artsolio-accent * {
   pointer-events: none !important;
 }
 
+/* When the inline media placeholder is present inside the figure,
+   re-enable clicks on the figure and its children so the buttons work. */
+.editor-styles-wrapper .wp-block-artsolio-accent.artsolio-accent:has(.block-editor-media-placeholder),
+.editor-styles-wrapper .wp-block-artsolio-accent.artsolio-accent:has(.block-editor-media-placeholder) * {
+  pointer-events: auto !important;
+  position: relative;
+  z-index: 120020 !important;
+}
+
+/* Raise the placeholder itself for good measure */
+.editor-styles-wrapper .wp-block-artsolio-accent .block-editor-media-placeholder {
+  position: relative !important;
+  z-index: 120020 !important;
+}
+
+/* Anchor containers behave in editor */
 .editor-styles-wrapper .artsolio_is-accent-anchor,
 .editor-styles-wrapper .is-accent-anchor {
   position: relative !important;
 }
 
-/* Keep Gutenberg modals on top inside the editor iframe (safe no-op if not present) */
+/* Keep Gutenberg modals on top inside the editor iframe (safe no-op when none) */
 .block-editor-page .components-modal__frame,
 .block-editor-page .components-modal__screen-overlay {
-  z-index: 100000 !important;
+  z-index: 200000 !important;
 }

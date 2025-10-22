@@ -73,11 +73,11 @@ export default function Edit( { attributes, setAttributes, clientId } ) {
 	// Keep parent classes in sync with the toggle
 	if ( parentAnchoring ) applyParentAnchor( true );
 
-	// Resolve offsets to strings (accepts px/rem/em/vw/cqi/clamp/etc.)
+	// Resolve offsets
 	const ox = String( (offsetX !== '' ? offsetX : (offsetUniform !== '' ? offsetUniform : 0)) );
 	const oy = String( (offsetY !== '' ? offsetY : (offsetUniform !== '' ? offsetUniform : 0)) );
 
-	// Authoritative inline sides → prevents any theme “flip”
+	// Authoritative inline sides
 	const sides = { top: 'auto', right: 'auto', bottom: 'auto', left: 'auto' };
 	switch (corner) {
 		case 'top-left':     sides.top = oy;    sides.left = ox;   break;
@@ -92,7 +92,7 @@ export default function Edit( { attributes, setAttributes, clientId } ) {
 		inlineSize: sizeValue || undefined,
 		position: 'absolute',
 		zIndex: 'var(--artsolio_accent_z, 12000)',
-		pointerEvents: 'none',
+		// NOTE: no pointerEvents here (removed)
 		...sides,
 	};
 
