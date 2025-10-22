@@ -1,87 +1,137 @@
 <?php
 /**
- * Plugin Name:  Artsolio Accent Block
- * Description:  Position decorative accent images responsively with container-based sizing. Core/Kadence compatible.
- * Version:      1.0.0
- * Requires PHP: 8.0
+ * Plugin Name: Artsolio Accent Block
+ * Description: Decorative, responsive accent images with corner placement and theme-agnostic anchoring.
+ * Author: Artsolio
+ * Version: 1.0.0
  * Requires at least: 6.6
- * Author:       Artsolio
- * License:      GPL-2.0-or-later
- * Text Domain:  artsolio-accent
+ * Requires PHP: 7.4
+ * Text Domain: artsolio-accent
  */
 
-defined('ABSPATH') || exit;
+if ( ! defined( 'ABSPATH' ) ) { exit; }
 
-const ARTSOLIO_ACCENT_VERSION = '1.0.0';
-const ARTSOLIO_ACCENT_SLUG    = 'artsolio-accent-block';
+/** Register the block from block.json */
+add_action( 'init', function () {
+	$block_dir = __DIR__ . '/blocks/accent';
+	if ( file_exists( $block_dir . '/block.json' ) ) {
+		register_block_type( $block_dir );
+	}
+} );
 
 /**
- * Allow developers to disable the Core Group variation via code.
- * Define in wp-config.php or a must-use plugin BEFORE this plugin loads:
- *
- *   define( 'ARTSOLIO_ACCENT_ENABLE_CORE_GROUP_VARIATION', false );
+ * Editor hardening (inside the iframe)
+ * - Keep the floating accent non-interactive; block UI clickable.
+ * - When the inline MEDIA PLACEHOLDER is visible, raise it above Kadence stacks
+ *   and prevent clipping/overlays from stealing clicks (neutralize known wrappers).
+ * - Keep Gutenberg modals on top (harmless if not present).
  */
-if ( ! defined( 'ARTSOLIO_ACCENT_ENABLE_CORE_GROUP_VARIATION' ) ) {
-	define( 'ARTSOLIO_ACCENT_ENABLE_CORE_GROUP_VARIATION', true );
+add_action( 'enqueue_block_editor_assets', function () {
+	$css = <<<CSS
+/* === Artsolio Accent — Editor-only (iframe) === */
+
+/* Only the floating accent figure should be non-interactive; block UI stays clickable */
+.editor-styles-wrapper .wp-block-artsolio-accent .artsolio-accent,
+.editor-styles-wrapper .wp-block-artsolio-accent .artsolio-accent * {
+  pointer-events: none !important;
 }
+.editor-styles-wrapper .wp-block-artsolio-accent { pointer-events: auto !important; }
+
+/* Ensure anchor containers behave in editor */
+.editor-styles-wrapper .artsolio_is-accent-anchor,
+.editor-styles-wrapper .is-accent-anchor {
+  position: relative !important;
+}
+
+/* ---------- Inline placeholder visible: raise it and unclip surroundings ---------- */
+
+/* 0) Create a high stacking context on our block WHILE the placeholder exists */
+.editor-styles-wrapper .wp-block-artsolio-accent:has(.block-editor-media-placeholder) {
+  position: relative !important;
+  isolation: isolate;
+  z-index: 120000 !important;
+  overflow: visible !important;
+}
+
+/* 1) The actual placeholder UI should sit above everything and be clickable */
+.editor-styles-wrapper .wp-block-artsolio-accent .block-editor-media-placeholder {
+  position: relative !important;
+  z-index: 120010 !important;
+  pointer-events: auto !important;
+}
+
+/* 2) Prevent clipping on common editor roots while the placeholder is visible */
+.editor-styles-wrapper:has(.wp-block-artsolio-accent .block-editor-media-placeholder),
+.block-editor-block-list__layout:has(.wp-block-artsolio-accent .block-editor-media-placeholder),
+.block-editor-writing-flow:has(.wp-block-artsolio-accent .block-editor-media-placeholder),
+.is-root-container:has(.wp-block-artsolio-accent .block-editor-media-placeholder) {
+  overflow: visible !important;
+}
+
+/* 3) Neutralize Kadence wrappers ONLY while the placeholder is present.
+      These classnames match your DOM: .kadence-inner-column-inner, kt-animation-wrap, etc. */
+.editor-styles-wrapper:has(.wp-block-artsolio-accent .block-editor-media-placeholder) .kadence-inner-column-inner,
+.editor-styles-wrapper:has(.wp-block-artsolio-accent .block-editor-media-placeholder) .kt-animation-wrap,
+.editor-styles-wrapper:has(.wp-block-artsolio-accent .block-editor-media-placeholder) .kadence-inner-column-direction-vertical,
+.editor-styles-wrapper:has(.wp-block-artsolio-accent .block-editor-media-placeholder) .kadence-inner-column-direction-vertical-reverse,
+.editor-styles-wrapper:has(.wp-block-artsolio-accent .block-editor-media-placeholder) .kb-row-layout-wrap,
+.editor-styles-wrapper:has(.wp-block-artsolio-accent .block-editor-media-placeholder) .kt-row-column-wrap,
+.editor-styles-wrapper:has(.wp-block-artsolio-accent .block-editor-media-placeholder) .kt-inside-inner-col,
+.editor-styles-wrapper:has(.wp-block-artsolio-accent .block-editor-media-placeholder) .kt-row-layout-inner,
+.editor-styles-wrapper:has(.wp-block-artsolio-accent .block-editor-media-placeholder) .kt-row-layout-overlay,
+.editor-styles-wrapper:has(.wp-block-artsolio-accent .block-editor-media-placeholder) .kb-row-layout-overlay {
+  transform: none !important;
+  filter: none !important;
+  -webkit-backface-visibility: visible !important;
+  backface-visibility: visible !important;
+  /* Drop their z-index below our placeholder during selection/upload */
+  z-index: 0 !important;
+}
+
+/* 4) Sometimes the outer block wrapper (block-list__block) gets raised.
+      Push siblings below ONLY while the placeholder is visible. */
+.editor-styles-wrapper:has(.wp-block-artsolio-accent .block-editor-media-placeholder) .block-editor-block-list__block {
+  z-index: 0 !important;
+}
+
+/* Keep Gutenberg modals on top inside the editor iframe (safe no-op when none) */
+.block-editor-page .components-modal__frame,
+.block-editor-page .components-modal__screen-overlay {
+  z-index: 200000 !important;
+}
+CSS;
+
+	if ( wp_style_is( 'wp-edit-blocks', 'registered' ) ) {
+		wp_add_inline_style( 'wp-edit-blocks', $css );
+	} else {
+		wp_add_inline_style( 'wp-block-library', $css );
+	}
+} );
 
 /**
- * Default size and offset presets (filterable).
+ * Admin (top document) hardening — unchanged
  */
-function artsolio_accent_get_default_presets() : array {
-	$size = array(
-		'XS' => 'clamp(56px, 7cqi, 96px)',
-		'S'  => 'clamp(64px, 9cqi, 120px)',
-		'M'  => 'clamp(80px, 12cqi, 160px)',
-		'L'  => 'clamp(96px, 15cqi, 200px)',
-		'XL' => 'clamp(112px, 18cqi, 240px)',
-	);
-	$offset = array(
-		'XS' => '0.25rem',
-		'S'  => '0.5rem',
-		'M'  => '0.75rem',
-		'L'  => '1rem',
-		'XL' => '1.5rem',
-	);
+add_action( 'admin_enqueue_scripts', function ( $hook ) {
+	if ( $hook !== 'post.php' && $hook !== 'post-new.php' && $hook !== 'site-editor.php' ) return;
 
-	$size   = apply_filters( 'artsolio_accent_size_presets', $size );
-	$offset = apply_filters( 'artsolio_accent_offset_presets', $offset );
-
-	return array(
-		'size'   => $size,
-		'offset' => $offset,
-	);
+	$css = <<<CSS
+/* --- Artsolio Accent — Admin (top document) --- */
+body.wp-admin .media-modal,
+body.wp-admin .components-modal__frame,
+body.wp-admin .components-modal__screen-overlay {
+	z-index: 160000 !important;
+	pointer-events: auto !important;
 }
-
-/**
- * Register a tiny editor config script (handle only) so block.json can list it by handle.
- * We then inject preset data and the variation flag via inline script before it runs.
- */
-function artsolio_accent_register_editor_config_script() {
-	$handle = 'artsolio-accent-editor-config';
-	wp_register_script( $handle, '', array(), ARTSOLIO_ACCENT_VERSION, true );
-
-	$presets = artsolio_accent_get_default_presets();
-
-	$config = array(
-		'size'                     => $presets['size'],
-		'offset'                   => $presets['offset'],
-		'enableCoreGroupVariation' => (bool) ARTSOLIO_ACCENT_ENABLE_CORE_GROUP_VARIATION,
-	);
-
-	$inline = 'window.artsolioAccentPresetConfig = ' . wp_json_encode(
-		$config,
-		JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP
-	) . ';';
-
-	wp_add_inline_script( $handle, $inline, 'before' );
+body.wp-admin.modal-open iframe[name="editor-canvas"],
+body.wp-admin.modal-open .edit-post-visual-editor iframe,
+body.wp-admin.modal-open .block-editor .editor-canvas__iframe {
+	pointer-events: none !important;
+	z-index: 1 !important;
 }
-add_action( 'init', 'artsolio_accent_register_editor_config_script' );
+body.wp-admin.modal-open .components-popover { z-index: 150000 !important; }
+CSS;
 
-/**
- * Register the block from metadata.
- */
-function artsolio_accent_register_block() {
-	register_block_type( __DIR__ . '/blocks/accent' );
-}
-add_action( 'init', 'artsolio_accent_register_block' );
+	wp_register_style( 'artsolio-accent-admin-topdoc', false );
+	wp_enqueue_style( 'artsolio-accent-admin-topdoc' );
+	wp_add_inline_style( 'artsolio-accent-admin-topdoc', $css );
+} );
