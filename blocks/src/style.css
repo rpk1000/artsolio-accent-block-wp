@@ -30,7 +30,7 @@
 .wp-block-columns:has(.artsolio-accent),
 .wp-block-column:has(.artsolio-accent) {
   position: relative !important;
-  z-index: var(--artsolio_anchor_z, 12000) !important;
+  z-index: calc(var(--artsolio_anchor_z, 12000) + 1) !important;
   isolation: isolate;
 }
 
