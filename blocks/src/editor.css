@@ -1,29 +1,57 @@
-/* === Artsolio Accent — Editor-only (inside the editor iframe) === */
+/* === Artsolio Accent — Editor-only (iframe) === */
 
-/* Replace button styling (MediaReplaceFlow) */
-.editor-styles-wrapper
-  .wp-block-artsolio-accent.artsolio-accent
-  .components-dropdown {
-  background-color: rgba(255, 255, 255, 0.8);
-  display: block;
-  z-index: 12002;
-  position: absolute;
-  padding: 1rem;
-  top: calc(50% - 32px);
-  left: calc(50% - 37px);
+/* 1) Allow clicking the accent figure to select the block */
+.editor-styles-wrapper .wp-block-artsolio-accent.artsolio-accent {
+  pointer-events: auto !important;
 }
 
+/* (We no longer disable pointer events globally on descendants.) */
+
+/* 2) When the inline media placeholder is present, ensure it’s clickable and above */
+.editor-styles-wrapper .wp-block-artsolio-accent.artsolio-accent:has(.block-editor-media-placeholder),
+.editor-styles-wrapper .wp-block-artsolio-accent.artsolio-accent:has(.block-editor-media-placeholder) * {
+  pointer-events: auto !important;
+  position: relative;
+  z-index: 120020 !important;
+}
+.editor-styles-wrapper .wp-block-artsolio-accent .block-editor-media-placeholder {
+  position: relative !important;
+  z-index: 120020 !important;
+}
+
+/* 3) Style the Replace toggle (now in the block toolbar, but keep this harmless) */
 .editor-styles-wrapper
   .wp-block-artsolio-accent.artsolio-accent.is-selected
-  .components-dropdown button {
+  .components-dropdown > .components-button {
   display: inline-flex;
-  background: #007CBA;
-  color: #fff;
+  align-items: center;
+  gap: .25rem;
+  padding: .25rem .5rem;
+  border-radius: 4px;
+  background: var(--wp--preset--color--secondary, #3858e9);
+  color: var(--wp--preset--color--white, #fff);
+  box-shadow: 0 1px 2px rgb(0 0 0 / 15%);
+  pointer-events: auto !important;
+  z-index: 120030 !important;
 }
 
-/* Optional: hide the dropdown when the block isn’t selected */
-.editor-styles-wrapper
-  .wp-block-artsolio-accent.artsolio-accent:not(.is-selected)
-  .components-dropdown button {
-  display: none;
+/* 4) Raise Gutenberg dropdown/popovers so they’re always on top */
+.editor-styles-wrapper .components-popover {
+  z-index: 200050 !important;
+}
+.editor-styles-wrapper .components-popover__content {
+  pointer-events: auto !important;
+}
+
+/* 5) Anchor containers behave in editor (parity) */
+.editor-styles-wrapper .is-accent-anchor,
+.editor-styles-wrapper .artsolio_is-accent-anchor {
+  position: relative !important;
+  isolation: isolate;
+}
+
+/* 6) Keep Gutenberg modals above everything in the iframe */
+.block-editor-page .components-modal__frame,
+.block-editor-page .components-modal__screen-overlay {
+  z-index: 200000 !important;
 }

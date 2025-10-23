@@ -1,9 +1,9 @@
 import {
 	useBlockProps,
 	InspectorControls,
+	BlockControls,
 	MediaReplaceFlow,
 	MediaPlaceholder,
-	BlockControls,
 } from '@wordpress/block-editor';
 import {
 	PanelBody,
@@ -17,24 +17,33 @@ import { useSelect, useDispatch } from '@wordpress/data';
 import { useCallback } from '@wordpress/element';
 
 const CORNERS = [
-	{ label: 'Top Left', value: 'top-left' },
-	{ label: 'Top Right', value: 'top-right' },
-	{ label: 'Bottom Left', value: 'bottom-left' },
-	{ label: 'Bottom Right', value: 'bottom-right' },
+	{ label: 'Position A', value: 'top-left' },
+	{ label: 'Position B', value: 'top-right' },
+	{ label: 'Position C', value: 'bottom-left' },
+	{ label: 'Position D', value: 'bottom-right' },
+];
+
+const LAYERS = [
+	{ label: 'Auto', value: 0 },
+	{ label: 'Lift', value: 1 },
+	{ label: 'High', value: 2 },
+	{ label: 'Higher', value: 3 },
+	{ label: 'Max', value: 4 },
 ];
 
 const CLASS_ANCHOR_A = 'is-accent-anchor';
 const CLASS_ANCHOR_B = 'artsolio_is-accent-anchor';
+const LAYER_CLASSES = ['artsolio-layer-0','artsolio-layer-1','artsolio-layer-2','artsolio-layer-3','artsolio-layer-4'];
 
-function pickImage(attrs) {
-	const url   = attrs?.image?.url || attrs?.url || attrs?.imageUrl || attrs?.imageURL || attrs?.src || '';
-	const alt   = (attrs?.image?.alt ?? attrs?.alt ?? '') || '';
-	const width = attrs?.image?.width  ?? attrs?.width;
-	const height= attrs?.image?.height ?? attrs?.height;
-	const srcSet= attrs?.image?.srcset ?? attrs?.srcset;
-	const sizes = attrs?.image?.sizes  ?? attrs?.sizes;
+const pickImage = (attrs = {}) => {
+	const url    = attrs?.image?.url || attrs?.url || '';
+	const alt    = attrs?.image?.alt ?? attrs?.alt ?? '';
+	const width  = attrs?.image?.width  ?? attrs?.width;
+	const height = attrs?.image?.height ?? attrs?.height;
+	const srcSet = attrs?.image?.srcset ?? attrs?.srcset;
+	const sizes  = attrs?.image?.sizes  ?? attrs?.sizes;
 	return { url, alt, width, height, srcSet, sizes };
-}
+};
 
 export default function Edit( { attributes, setAttributes, clientId } ) {
 	const {
@@ -45,6 +54,9 @@ export default function Edit( { attributes, setAttributes, clientId } ) {
 		offsetX = '',
 		offsetY = '',
 		parentAnchoring = false,
+		anchorLayer = 0,
+		image,
+		url,
 	} = attributes;
 
 	const { getBlockRootClientId, getBlock } =
@@ -53,31 +65,40 @@ export default function Edit( { attributes, setAttributes, clientId } ) {
 
 	const parentId = getBlockRootClientId( clientId );
 
-	const applyParentAnchor = useCallback(
-		(enable) => {
-			if ( ! parentId ) return;
-			const parent = getBlock( parentId );
-			if ( ! parent ) return;
+	const syncParentClasses = useCallback( (enable, layer) => {
+		if ( ! parentId ) return;
+		const parent = getBlock( parentId );
+		if ( ! parent ) return;
 
-			const existing = ( parent.attributes?.className || '' ).split(/\s+/).filter(Boolean);
-			const want = [ CLASS_ANCHOR_A, CLASS_ANCHOR_B ];
-			const next = enable
-				? Array.from( new Set( existing.concat( want ) ) ).join(' ')
-				: existing.filter( c => ! want.includes( c ) ).join(' ');
+		const existing = ( parent.attributes?.className || '' )
+			.split(/\s+/).filter(Boolean);
 
-			updateBlockAttributes( parentId, { className: next } );
-		},
-		[ parentId, getBlock, updateBlockAttributes ]
-	);
+		// remove any prior layer classes
+		const withoutLayer = existing.filter( c => ! LAYER_CLASSES.includes(c) );
+		let next = withoutLayer;
 
-	// Keep parent classes in sync with the toggle
-	if ( parentAnchoring ) applyParentAnchor( true );
+		if ( enable ) {
+			next = Array.from( new Set(
+				next.concat([ CLASS_ANCHOR_A, CLASS_ANCHOR_B, `artsolio-layer-${layer}` ])
+			) );
+		} else {
+			// remove anchor classes when disabling
+			next = withoutLayer.filter( c => c !== CLASS_ANCHOR_A && c !== CLASS_ANCHOR_B );
+		}
 
-	// Resolve offsets
-	const ox = String( (offsetX !== '' ? offsetX : (offsetUniform !== '' ? offsetUniform : 0)) );
-	const oy = String( (offsetY !== '' ? offsetY : (offsetUniform !== '' ? offsetUniform : 0)) );
+		updateBlockAttributes( parentId, { className: next.join(' ') } );
+	}, [ parentId, getBlock, updateBlockAttributes ] );
 
-	// Authoritative inline sides
+	// Keep parent in sync while toggle is on (and when layer changes)
+	if ( parentAnchoring ) {
+		syncParentClasses( true, anchorLayer );
+	}
+
+	// Resolve offsets as strings (accept clamp()/calc())
+	const ox = String( offsetX !== '' ? offsetX : ( offsetUniform !== '' ? offsetUniform : 0 ) );
+	const oy = String( offsetY !== '' ? offsetY : ( offsetUniform !== '' ? offsetUniform : 0 ) );
+
+	// Corner → inline sides
 	const sides = { top: 'auto', right: 'auto', bottom: 'auto', left: 'auto' };
 	switch (corner) {
 		case 'top-left':     sides.top = oy;    sides.left = ox;   break;
@@ -92,7 +113,6 @@ export default function Edit( { attributes, setAttributes, clientId } ) {
 		inlineSize: sizeValue || undefined,
 		position: 'absolute',
 		zIndex: 'var(--artsolio_accent_z, 12000)',
-		// NOTE: no pointerEvents here (removed)
 		...sides,
 	};
 
@@ -102,7 +122,7 @@ export default function Edit( { attributes, setAttributes, clientId } ) {
 		hideOnMobile ? 'is-hidden-mobile' : '',
 	].filter(Boolean).join(' ');
 
-	const { url, alt, width, height, srcSet, sizes } = pickImage(attributes);
+	const img = pickImage({ image, url });
 
 	return (
 		<>
@@ -113,11 +133,19 @@ export default function Edit( { attributes, setAttributes, clientId } ) {
 						onClick={() => {
 							const next = !parentAnchoring;
 							setAttributes({ parentAnchoring: next });
-							applyParentAnchor( next );
+							syncParentClasses( next, anchorLayer );
 						}}
 					>
 						Anchor to parent
 					</ToolbarButton>
+					{ img.url && (
+						<MediaReplaceFlow
+							mediaId={attributes.id || attributes.imageId || attributes.mediaId}
+							mediaURL={img.url}
+							accept="image/*"
+							onSelect={(media) => setAttributes({ image: media, url: media?.url })}
+						/>
+					) }
 				</ToolbarGroup>
 			</BlockControls>
 
@@ -139,8 +167,22 @@ export default function Edit( { attributes, setAttributes, clientId } ) {
 						checked={!!parentAnchoring}
 						onChange={(v) => {
 							setAttributes({ parentAnchoring: !!v });
-							applyParentAnchor( !!v );
+							syncParentClasses( !!v, anchorLayer );
 						}}
+					/>
+				</PanelBody>
+
+				<PanelBody title="Layer (Z-index)" initialOpen={false}>
+					<SelectControl
+						label="Lift over neighbors"
+						value={String(anchorLayer)}
+						options={LAYERS.map(o => ({ label: o.label, value: String(o.value) }))}
+						onChange={(val) => {
+							const layer = Number(val);
+							setAttributes({ anchorLayer: layer });
+							if ( parentAnchoring ) syncParentClasses( true, layer );
+						}}
+						help="Applies artsolio-layer-N to the parent (sets --artsolio_anchor_z). The accent renders at +1."
 					/>
 				</PanelBody>
 
@@ -178,26 +220,19 @@ export default function Edit( { attributes, setAttributes, clientId } ) {
 			</InspectorControls>
 
 			<figure {...useBlockProps({ className, style })}>
-				{ url ? (
-					<>
-						<MediaReplaceFlow
-							mediaId={attributes.id || attributes.imageId || attributes.mediaId}
-							mediaURL={url}
-							accept="image/*"
-							onSelect={(media) => setAttributes({ image: media, url: media?.url })}
-						/>
-						<img
-							src={url}
-							alt={alt}
-							decoding="async"
-							loading="lazy"
-							draggable="false"
-							width={width}
-							height={height}
-							srcSet={srcSet}
-							sizes={sizes}
-						/>
-					</>
+				{ img.url ? (
+					<img
+						src={img.url}
+						alt={img.alt}
+						decoding="async"
+						loading="lazy"
+						draggable="false"
+						width={img.width}
+						height={img.height}
+						srcSet={img.srcSet}
+						sizes={img.sizes}
+						style={{ display:'block', width:'100%', maxWidth:'100%', height:'auto' }}
+					/>
 				) : (
 					<MediaPlaceholder
 						icon="format-image"

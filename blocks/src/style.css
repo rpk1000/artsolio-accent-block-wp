@@ -1,47 +1,57 @@
-/* === Artsolio Accent — minimal, theme-agnostic === */
+/* === Artsolio Accent — Frontend + Editor parity === */
 
-/* The accent element itself */
+/* The figure’s width is controlled by CSS var; positioning is set inline */
 .artsolio-accent,
 .wp-block-artsolio-accent {
   inline-size: var(--artsolio_accent_size);
-  /* position & sides are inline on the <figure> from edit/save */
-  /* pointer-events is inline (decorative) */
+  margin: 0;                 /* prevent default figure margins from shifting position */
+  display: block;            /* ensure predictable box for absolute positioning */
 }
 
-/* If the parent anchoring toggle is used */
+/* === Anchor stacking presets (applied to the PARENT via classes) === */
+/* Base contract: parent defines --artsolio_anchor_z; figure is +1 */
+
 .is-accent-anchor,
 .artsolio_is-accent-anchor {
   position: relative !important;
-  z-index: var(--artsolio_anchor_z, 12000) !important;
   isolation: isolate;
+  z-index: var(--artsolio_anchor_z, 12000) !important; /* baseline */
 }
 
-/* Accent above content within that anchor */
 .is-accent-anchor .artsolio-accent,
 .artsolio_is-accent-anchor .artsolio-accent {
   z-index: calc(var(--artsolio_anchor_z, 12000) + 1) !important;
   transform: translateZ(0);
 }
 
-/* Fallback: lift any common container that actually contains the accent (Kadence or Core) */
+/* Presets (set by classes we add to the parent) */
+.is-accent-anchor.artsolio-layer-0,
+.artsolio_is-accent-anchor.artsolio-layer-0 { --artsolio_anchor_z: 12000; }
+
+.is-accent-anchor.artsolio-layer-1,
+.artsolio_is-accent-anchor.artsolio-layer-1 { --artsolio_anchor_z: 20000; }
+
+.is-accent-anchor.artsolio-layer-2,
+.artsolio_is-accent-anchor.artsolio-layer-2 { --artsolio_anchor_z: 30000; }
+
+.is-accent-anchor.artsolio-layer-3,
+.artsolio_is-accent-anchor.artsolio-layer-3 { --artsolio_anchor_z: 40000; }
+
+.is-accent-anchor.artsolio-layer-4,
+.artsolio_is-accent-anchor.artsolio-layer-4 { --artsolio_anchor_z: 50000; }
+
+/* Fallback: lift common containers that actually contain the accent */
 .wp-block-kadence-column:has(.artsolio-accent),
 .wp-block-kadence-rowlayout:has(.artsolio-accent),
 .wp-block-group:has(.artsolio-accent),
 .wp-block-columns:has(.artsolio-accent),
 .wp-block-column:has(.artsolio-accent) {
   position: relative !important;
-  z-index: calc(var(--artsolio_anchor_z, 12000) + 1) !important;
   isolation: isolate;
-}
-
-/* Kadence inner column wrapper containing the accent should also be isolated/lifted */
-.kt-inside-inner-col:has(.artsolio-accent) {
-  position: relative !important;
   z-index: var(--artsolio_anchor_z, 12000) !important;
-  isolation: isolate;
 }
 
-/* And make sure the accent is above its siblings inside that container */
+/* Ensure the figure sits above within those containers */
 .wp-block-kadence-column:has(.artsolio-accent) .artsolio-accent,
 .wp-block-kadence-rowlayout:has(.artsolio-accent) .artsolio-accent,
 .wp-block-group:has(.artsolio-accent) .artsolio-accent,
@@ -50,54 +60,11 @@
   z-index: calc(var(--artsolio_anchor_z, 12000) + 1) !important;
 }
 
-/* Theme decorative overlays should never sit above the accent */
-.kb-row-layout-overlay,
-.kt-row-layout-overlay {
-  z-index: 1 !important;
-  pointer-events: none;
-}
 
-/* Hide on mobile */
+/* Mobile hide */
 @media (max-width: 781px) {
   .artsolio-accent.is-hidden-mobile,
-  .wp-block-artsolio-accent.is-hidden-mobile { display: none !important; }
-}
-
-/* === Kadence-only vertical correction ===================================== */
-/* If the accent sits inside Kadence Row/Column inner wrappers, map top/bottom correctly.
-   We use !important to safely override the figure's inline side in this specific context. */
-
-body.kadence-theme .wp-block-kadence-rowlayout .kt-inside-inner-col .artsolio-accent.is-top-left,
-body.kadence-theme .wp-block-kadence-column    .kt-inside-inner-col .artsolio-accent.is-top-left,
-body.kadence-theme .kt-inside-inner-col .artsolio-accent.is-top-left {
-  bottom: var(--artsolio_offset_y, var(--artsolio_accent_offset, 0)) !important;
-  top: auto !important;
-}
-
-body.kadence-theme .wp-block-kadence-rowlayout .kt-inside-inner-col .artsolio-accent.is-top-right,
-body.kadence-theme .wp-block-kadence-column    .kt-inside-inner-col .artsolio-accent.is-top-right,
-body.kadence-theme .kt-inside-inner-col .artsolio-accent.is-top-right {
-  bottom: var(--artsolio_offset_y, var(--artsolio_accent_offset, 0)) !important;
-  top: auto !important;
-}
-
-body.kadence-theme .wp-block-kadence-rowlayout .kt-inside-inner-col .artsolio-accent.is-bottom-left,
-body.kadence-theme .wp-block-kadence-column    .kt-inside-inner-col .artsolio-accent.is-bottom-left,
-body.kadence-theme .kt-inside-inner-col .artsolio-accent.is-bottom-left {
-  top: var(--artsolio_offset_y, var(--artsolio_accent_offset, 0)) !important;
-  bottom: auto !important;
-}
-
-body.kadence-theme .wp-block-kadence-rowlayout .kt-inside-inner-col .artsolio-accent.is-bottom-right,
-body.kadence-theme .wp-block-kadence-column    .kt-inside-inner-col .artsolio-accent.is-bottom-right,
-body.kadence-theme .kt-inside-inner-col .artsolio-accent.is-bottom-right {
-  top: var(--artsolio_offset_y, var(--artsolio_accent_offset, 0)) !important;
-  bottom: auto !important;
-}
-
-/* Lift Kadence inner column if it directly contains the accent */
-.kt-inside-inner-col:has(.artsolio-accent) {
-  position: relative !important;
-  z-index: var(--artsolio_anchor_z, 12000) !important;
-  isolation: isolate;
+  .wp-block-artsolio-accent.is-hidden-mobile {
+    display: none !important;
+  }
 }

@@ -1,5 +1,15 @@
 import { useBlockProps } from '@wordpress/block-editor';
 
+const pickImage = (attrs = {}) => {
+	const url    = attrs?.image?.url || attrs?.url || '';
+	const alt    = attrs?.image?.alt ?? attrs?.alt ?? '';
+	const width  = attrs?.image?.width  ?? attrs?.width;
+	const height = attrs?.image?.height ?? attrs?.height;
+	const srcSet = attrs?.image?.srcset ?? attrs?.srcset;
+	const sizes  = attrs?.image?.sizes  ?? attrs?.sizes;
+	return { url, alt, width, height, srcSet, sizes };
+};
+
 export default function save( { attributes } ) {
 	const {
 		corner = 'bottom-left',
@@ -8,23 +18,12 @@ export default function save( { attributes } ) {
 		offsetUniform = '',
 		offsetX = '',
 		offsetY = '',
+		image,
+		url,
 	} = attributes;
 
-	// image (best-effort keys; we’ll lock to your schema once you can dump attributes)
-	const { image, url, imageUrl, imageURL, src, alt, srcset, sizes, width, height } = attributes;
-	const imgUrl   = image?.url || url || imageUrl || imageURL || src || '';
-	const imgAlt   = (image?.alt ?? alt ?? '') || '';
-	const imgW     = image?.width  ?? width  ?? undefined;
-	const imgH     = image?.height ?? height ?? undefined;
-	const imgSet   = image?.srcset ?? srcset ?? undefined;
-	const imgSizes = image?.sizes  ?? sizes  ?? undefined;
-
-	let className = 'artsolio-accent';
-	if ( corner ) className += ` is-${ corner }`;
-	if ( hideOnMobile ) className += ' is-hidden-mobile';
-
-	const ox = String( (offsetX !== '' ? offsetX : (offsetUniform !== '' ? offsetUniform : 0)) );
-	const oy = String( (offsetY !== '' ? offsetY : (offsetUniform !== '' ? offsetUniform : 0)) );
+	const ox = String( offsetX !== '' ? offsetX : ( offsetUniform !== '' ? offsetUniform : 0 ) );
+	const oy = String( offsetY !== '' ? offsetY : ( offsetUniform !== '' ? offsetUniform : 0 ) );
 
 	const sides = { top: 'auto', right: 'auto', bottom: 'auto', left: 'auto' };
 	switch (corner) {
@@ -40,19 +39,39 @@ export default function save( { attributes } ) {
 		inlineSize: sizeValue || undefined,
 		position: 'absolute',
 		zIndex: 'var(--artsolio_accent_z, 12000)',
-		pointerEvents: 'none',
 		...sides,
 	};
 
-	const imgProps = imgUrl ? {
-		src: imgUrl, alt: imgAlt,
-		decoding: 'async', loading: 'lazy', fetchpriority: 'low', draggable: 'false',
-		width: imgW, height: imgH, srcSet: imgSet, sizes: imgSizes,
-	} : null;
+	const className = [
+		'artsolio-accent',
+		`is-${corner}`,
+		hideOnMobile ? 'is-hidden-mobile' : '',
+	].filter(Boolean).join(' ');
+
+	const img = pickImage({ image, url });
 
 	return (
-		<figure { ...useBlockProps.save( { className, style } ) }>
-			{ imgProps && <img { ...imgProps } /> }
+		<figure {...useBlockProps.save({ className, style })}>
+			{ img.url ? (
+				<img
+					src={img.url}
+					alt={img.alt}
+					decoding="async"
+					loading="lazy"
+					draggable="false"
+					width={img.width}
+					height={img.height}
+					srcSet={img.srcSet}
+					sizes={img.sizes}
+					/* Force the image to follow the figure’s inline-size */
+					style={{
+					display: 'block',
+					width: '100%',
+					maxWidth: '100%',
+					height: 'auto'
+					}}
+				/>
+			) : null}
 		</figure>
 	);
 }
